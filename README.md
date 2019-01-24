@@ -25,10 +25,11 @@ It's very exciting.
 
 ## Example Graph
 
-The `sample-tags.csv` file in the root is a very small example of such a tag
-graph. There are eight nodes (with an empty second field), followed by twenty
-undirected edges. Both nodes and edges have an raw usage count in the third
-field, and time-decayed usage in the fourth.
+The `src/main/resources/sample-tags.csv` file in the root is a very small
+example of such a tag graph describing someone's exercise history. There are
+eight nodes (with an empty second field), followed by twenty undirected edges.
+Both nodes and edges have an raw usage count in the third field, and
+time-decayed usage in the fourth.
 
 It's unclear whether these weighting factors are the right ones, but they're a
 start, and unweighted processing will happen first.
