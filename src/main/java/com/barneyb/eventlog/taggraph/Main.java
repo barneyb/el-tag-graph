@@ -1,50 +1,56 @@
 package com.barneyb.eventlog.taggraph;
 
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
-import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.stream.file.FileSourceDGS;
-import org.graphstream.ui.geom.Point2;
-import org.graphstream.ui.geom.Point3;
-import org.graphstream.ui.view.Camera;
-import org.graphstream.ui.view.View;
-import org.graphstream.ui.view.Viewer;
 
-import java.awt.*;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Set;
+import java.util.TreeSet;
 
 import static com.barneyb.eventlog.taggraph.Constants.STDIO;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        Graph graph = new MultiGraph("Sample");
+        Graph graph = new SingleGraph("Sample");
         FileSourceDGS src = new FileSourceDGS();
         src.addSink(graph);
         src.readAll(args.length == 0 || STDIO.equals(args[0])
                 ? System.in
                 : new FileInputStream(args[0]));
 
-        graph.addAttribute("ui.stylesheet", "node.event { fill-color: red; text-mode: hidden; }\n" +
-                "node.tag { fill-color: blue; text-background-mode: plain; text-alignment: at-right; text-offset: 5px; text-size: 30; }\n");
-        Viewer viewer = graph.display();
-        View view = viewer.getDefaultView();
+        graph.addAttribute("ui.stylesheet", "node.event { size: 10px; fill-color: #c66; text-mode: hidden; }\n" +
+                "node.tag {  size: 15px; fill-color: #00c; text-background-mode: plain; text-alignment: at-right; text-size: 30; }\n");
+        graph.display();
 
-        // https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
-        ((Component) view).addMouseWheelListener(e -> {
-            e.consume();
-            int i = e.getWheelRotation();
-            double factor = Math.pow(1.25, i);
-            Camera cam = view.getCamera();
-            double zoom = cam.getViewPercent() * factor;
-            Point2 pxCenter  = cam.transformGuToPx(cam.getViewCenter().x, cam.getViewCenter().y, 0);
-            Point3 guClicked = cam.transformPxToGu(e.getX(), e.getY());
-            double newRatioPx2Gu = cam.getMetrics().ratioPx2Gu/factor;
-            double x = guClicked.x + (pxCenter.x - e.getX())/newRatioPx2Gu;
-            double y = guClicked.y - (pxCenter.y - e.getY())/newRatioPx2Gu;
-            cam.setViewCenter(x, y, 0);
-            cam.setViewPercent(zoom);
-        });
+        Graph tree = new SingleGraph("tree");
+        Node start = tree.addNode("start");
+        start.addAttribute("ui.label", "Start");
+
+        doLevel(tree, new Thing(graph), start, new TreeSet<>());
+
+        tree.addAttribute("ui.stylesheet", "node { text-size: 30; }\n" +
+                "edge { text-size: 24; }");
+        tree.display();
+    }
+
+    private static void doLevel(Graph tree, Thing thing, Node curr, Set<String> selected) {
+        for (String t : thing.suggestions(selected)) {
+            Node n = tree.addNode(curr.getId() + "/" + t);
+            n.addAttribute("ui.label", t);
+            n.addAttribute("ui.class", "level-" + selected.size());
+            Edge e = tree.addEdge(curr.getId() + ":" + n.getId(), curr, n, true);
+            e.addAttribute("ui.class", "level-" + selected.size());
+            if (selected.size() < 2) {
+                Set<String> nsel = new TreeSet<>(selected);
+                nsel.add(t);
+                doLevel(tree, thing, n, nsel);
+            }
+        }
     }
 
 }
