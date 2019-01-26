@@ -10,10 +10,10 @@ import org.graphstream.ui.view.View;
 import org.graphstream.ui.view.Viewer;
 
 import java.awt.*;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.io.FileInputStream;
 import java.io.IOException;
+
+import static com.barneyb.eventlog.taggraph.Constants.STDIO;
 
 public class Main {
 
@@ -21,7 +21,7 @@ public class Main {
         Graph graph = new MultiGraph("Sample");
         FileSourceDGS src = new FileSourceDGS();
         src.addSink(graph);
-        src.readAll(args.length == 0 || "-".equals(args[0])
+        src.readAll(args.length == 0 || STDIO.equals(args[0])
                 ? System.in
                 : new FileInputStream(args[0]));
 
@@ -31,22 +31,19 @@ public class Main {
         View view = viewer.getDefaultView();
 
         // https://stackoverflow.com/questions/44675827/how-to-zoom-into-a-graphstream-view
-        ((Component) view).addMouseWheelListener(new MouseWheelListener() {
-            @Override
-            public void mouseWheelMoved(MouseWheelEvent e) {
-                e.consume();
-                int i = e.getWheelRotation();
-                double factor = Math.pow(1.25, i);
-                Camera cam = view.getCamera();
-                double zoom = cam.getViewPercent() * factor;
-                Point2 pxCenter  = cam.transformGuToPx(cam.getViewCenter().x, cam.getViewCenter().y, 0);
-                Point3 guClicked = cam.transformPxToGu(e.getX(), e.getY());
-                double newRatioPx2Gu = cam.getMetrics().ratioPx2Gu/factor;
-                double x = guClicked.x + (pxCenter.x - e.getX())/newRatioPx2Gu;
-                double y = guClicked.y - (pxCenter.y - e.getY())/newRatioPx2Gu;
-                cam.setViewCenter(x, y, 0);
-                cam.setViewPercent(zoom);
-            }
+        ((Component) view).addMouseWheelListener(e -> {
+            e.consume();
+            int i = e.getWheelRotation();
+            double factor = Math.pow(1.25, i);
+            Camera cam = view.getCamera();
+            double zoom = cam.getViewPercent() * factor;
+            Point2 pxCenter  = cam.transformGuToPx(cam.getViewCenter().x, cam.getViewCenter().y, 0);
+            Point3 guClicked = cam.transformPxToGu(e.getX(), e.getY());
+            double newRatioPx2Gu = cam.getMetrics().ratioPx2Gu/factor;
+            double x = guClicked.x + (pxCenter.x - e.getX())/newRatioPx2Gu;
+            double y = guClicked.y - (pxCenter.y - e.getY())/newRatioPx2Gu;
+            cam.setViewCenter(x, y, 0);
+            cam.setViewPercent(zoom);
         });
     }
 

@@ -1,8 +1,8 @@
 package com.barneyb.eventlog.taggraph;
 
-import org.graphstream.stream.file.FileSinkDGS;
-
 import java.io.*;
+
+import static com.barneyb.eventlog.taggraph.Constants.STDIO;
 
 /**
  * I convert an eventlog-extract CSV file to equivalent DGS file for loading. I
@@ -11,8 +11,6 @@ import java.io.*;
  * parity between the CSV and DGS file (not line-per-attribute).
  */
 public class ExtractToDGS {
-
-    private static final String STDIO = "-";
 
     public static void main(String[] args) throws IOException {
         String source = args.length > 0 ? args[0] : STDIO;
