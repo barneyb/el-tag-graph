@@ -1,5 +1,7 @@
 package com.barneyb.eventlog.taggraph;
 
+import org.graphstream.stream.file.FileSinkDGS;
+
 import java.io.*;
 
 public class ExtractToDGS {
@@ -28,11 +30,12 @@ public class ExtractToDGS {
             int n = Integer.parseInt(parts[2]);
             double weight = Double.parseDouble(parts[3]);
             if (tag == null) { // an event!
-                out.printf("an %s type=event ui.class=event weight=%f%n", event, weight);
+                assert event != null;
+                out.printf("an \"%s\" type=event ui.class=event ui.label=\"%s\" weight=%f%n", event, event, weight);
             } else if (event == null) { // a tag!
-                out.printf("an %s type=tag ui.class=tag n=%d weight=%f%n", tag, n, weight);
+                out.printf("an \"%s\" type=tag ui.class=tag ui.label=\"%s\" n=%d weight=%f%n", tag, tag, n, weight);
             } else { // a use!
-                out.printf("ae %s-%s %s %s type=use ui.class=use weight=%f%n", event, tag, event, tag, weight);
+                out.printf("ae \"%s-%s\" \"%s\" \"%s\" type=use ui.class=use weight=%f%n", event, tag, event, tag, weight);
             }
         }
     }
