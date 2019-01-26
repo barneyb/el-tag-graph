@@ -1,8 +1,12 @@
 package com.barneyb.eventlog.taggraph;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import static com.barneyb.eventlog.taggraph.Constants.STDIO;
+import static com.barneyb.eventlog.taggraph.Constants.*;
 
 /**
  * I convert an eventlog-extract CSV file to equivalent DGS file for loading. I
@@ -25,22 +29,59 @@ public class ExtractToDGS {
         out.println("DGS004");
         out.println("null 0 0");
         String line;
+        String thisEvent = null;
+        Map<String, Samples> tagSamples = new HashMap<>();
         while ((line = r.readLine()) != null) {
             line = line.trim();
             if (line.length() == 0) continue;
             String[] parts = line.split(",");
-            String event = "".equals(parts[0]) ? null : parts[0];
-            String tag = "".equals(parts[1]) ? null : parts[1];
-            int n = Integer.parseInt(parts[2]);
-            double weight = Double.parseDouble(parts[3]);
-            if (tag == null) { // an event!
-                assert event != null;
-                out.printf("an \"%s\" type=event ui.class=event ui.label=\"%s\" weight=%f%n", event, event, weight);
-            } else if (event == null) { // a tag!
-                out.printf("an \"%s\" type=tag ui.class=tag ui.label=\"%s\" n=%d weight=%f%n", tag, tag, n, weight);
-            } else { // a use!
-                out.printf("ae \"%s-%s\" \"%s\" \"%s\" type=use ui.class=use weight=%f%n", event, tag, event, tag, weight);
+            String event = parts[0];
+            // timestamp
+            double weight = Double.parseDouble(parts[2]);
+            String tag = parts[3];
+            if (! event.equals(thisEvent)) {
+                thisEvent = event;
+                out.printf("an \"%s\" %s=%s ui.class=event ui.label=\"%s\" %s=%f%n", event, ATTR_TYPE, TYPE_EVENT, event, ATTR_WEIGHT, weight);
             }
+            if (tagSamples.containsKey(tag)) {
+                tagSamples.get(tag).add(weight);
+            } else {
+                tagSamples.put(tag, new Samples(weight));
+                out.printf("an \"%s\" %s=%s ui.class=tag ui.label=\"%s\"%n", tag, ATTR_TYPE, TYPE_TAG, tag);
+            }
+            out.printf("ae \"%s-%s\" \"%s\" \"%s\" %s=%s ui.class=use %s=%f%n", event, tag, event, tag, ATTR_TYPE, TYPE_USE, ATTR_WEIGHT, weight);
+        }
+        ArrayList<String> tagList = new ArrayList<>(tagSamples.keySet());
+        Collections.sort(tagList);
+        for (String t : tagList) {
+            Samples ss = tagSamples.get(t);
+            out.printf("cn \"%s\" %s=%d %s=%f%n", t, ATTR_COUNT, ss.size(), ATTR_WEIGHT, ss.sum());
         }
     }
+
+    private static class Samples {
+        private int n;
+        private double sum;
+
+        Samples() {}
+
+        Samples(double firstSample) {
+            add(firstSample);
+        }
+
+        void add(double s) {
+            n += 1;
+            sum += s;
+        }
+
+        int size() {
+            return n;
+        }
+
+        double sum() {
+            return sum;
+        }
+
+    }
+
 }
