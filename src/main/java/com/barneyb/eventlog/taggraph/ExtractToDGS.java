@@ -4,6 +4,12 @@ import org.graphstream.stream.file.FileSinkDGS;
 
 import java.io.*;
 
+/**
+ * I convert an eventlog-extract CSV file to equivalent DGS file for loading. I
+ * could have been a FileSource, but wanted to keep the translation separate
+ * from "load for work". I also could have used FileSinkDGS, but wanted more
+ * parity between the CSV and DGS file (not line-per-attribute).
+ */
 public class ExtractToDGS {
 
     private static final String STDIO = "-";
