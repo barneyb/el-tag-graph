@@ -7,6 +7,7 @@ import org.graphstream.graph.Node;
 import java.util.*;
 
 import static com.barneyb.eventlog.taggraph.Constants.*;
+import static com.barneyb.eventlog.taggraph.suggest.Helpers.getTaggedEvents;
 
 public class SimpleWeight implements Suggester {
 
@@ -16,9 +17,9 @@ public class SimpleWeight implements Suggester {
         this.etGraph = etGraph;
     }
 
-    public List<WeightedTag> suggestions(Set<String> curr, int count) {
+    public List<WeightedTag> suggestions(Set<String> tags, int count) {
         SortedSet<WeightedTag> byWeight = new TreeSet<>(Comparator.comparingDouble((WeightedTag t) -> t.weight).reversed());
-        if (curr.isEmpty()) {
+        if (tags.isEmpty()) {
             // grab them all!
             for (Node n : etGraph) {
                 if (TYPE_TAG.equals(n.getAttribute(ATTR_TYPE))) {
@@ -26,26 +27,12 @@ public class SimpleWeight implements Suggester {
                 }
             }
         } else {
-            // find the events we care about
-            Set<Node> events = null;
-            for (String t : curr) {
-                Node tagNode = etGraph.getNode(t);
-                Set<Node> tagEvents = new HashSet<>();
-                for (Edge e : tagNode.getEachEdge()) {
-                    tagEvents.add(e.getOpposite(tagNode));
-                }
-                if (events == null) {
-                    events = tagEvents;
-                } else {
-                    events.retainAll(tagEvents);
-                }
-            }
             // now build the weighted tags those events carry
             Map<String, Double> tagMap = new HashMap<>();
-            for (Node eventNode : events) {
+            for (Node eventNode : getTaggedEvents(etGraph, tags)) {
                 for (Edge e : eventNode.getEachEdge()) {
                     String tag = e.getOpposite(eventNode).getId();
-                    if (curr.contains(tag)) continue;
+                    if (tags.contains(tag)) continue;
                     tagMap.merge(tag, eventNode.getAttribute(ATTR_WEIGHT), Double::sum);
                 }
             }
