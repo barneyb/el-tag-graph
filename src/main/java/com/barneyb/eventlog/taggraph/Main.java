@@ -14,15 +14,15 @@ import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.barneyb.eventlog.taggraph.Constants.STDIO;
+import static com.barneyb.eventlog.taggraph.Constants.*;
 
 public class Main {
 
     public static void main(String[] args) throws IOException {
         System.setProperty("org.graphstream.ui.renderer", "org.graphstream.ui.j2dviewer.J2DGraphRenderer");
-        Graph graph = new SingleGraph("Sample");
+        Graph raw = new SingleGraph("Sample");
         FileSourceDGS src = new FileSourceDGS();
-        src.addSink(graph);
+        src.addSink(raw);
         src.readAll(args.length < 1 || STDIO.equals(args[0])
                 ? System.in
                 : new FileInputStream(args[0]));
@@ -31,20 +31,46 @@ public class Main {
 //                "node.tag {  size: 15px; fill-color: #00c; text-alignment: at-right; text-size: 30; }\n");
 //        graph.display();
 
-        Graph tree = new SingleGraph("tree");
-        Node start = tree.addNode("start");
+
+
+
+        TagDistillery d = new TagDistillery(raw);
+        Graph relations = d.distilled();
+
+//        dump(raw      .getNode("masturbation"));
+//        dump(relations.getNode("masturbation"));
+
+//        relations.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
+//                "edge { text-size: 24; shape: freeplane; }");
+//        relations.display();
+
+
+
+        Graph paths = new SingleGraph("tree");
+        Node start = paths.addNode("start");
         start.addAttribute("ui.label", "Start");
-        doLevel(tree, new Thing(graph), start, new TreeSet<>());
+        doLevel(paths, new Thing(raw), start, new TreeSet<>());
 
         if (args.length >= 2) {
             FileSink sink = new FileSinkDGS();
-            tree.addSink(sink);
-            sink.writeAll(tree, new FileOutputStream(args[1]));
+            paths.addSink(sink);
+            sink.writeAll(paths, new FileOutputStream(args[1]));
         }
 
-        tree.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
+        paths.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
                 "edge { text-size: 24; shape: freeplane; }");
-        tree.display();
+        paths.display();
+    }
+
+    private static void dump(Node n) {
+        System.out.println(n.getId() + " " + n.getAttribute(ATTR_COUNT) + " : " + n.getAttribute(ATTR_WEIGHT));
+        double sum = 0;
+        for (Edge e : n.getEachLeavingEdge()) {
+            double w = e.getAttribute(ATTR_WEIGHT);
+            sum += w;
+            System.out.println("  " + e.getId() + " : " + w);
+        }
+        System.out.println("  " + sum);
     }
 
     private static void doLevel(Graph tree, Thing thing, Node curr, Set<String> selected) {
@@ -53,7 +79,7 @@ public class Main {
             n.addAttribute("ui.label", wt.tag);
             Edge e = tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
             e.addAttribute("ui.label", Math.round(wt.weight * 100) / 100.0);
-            if (selected.size() < 4) {
+            if (selected.size() < 3) {
                 Set<String> nsel = new TreeSet<>(selected);
                 nsel.add(wt.tag);
                 doLevel(tree, thing, n, nsel);
