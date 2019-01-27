@@ -20,7 +20,7 @@ public class Thing {
         maxSuggestions = DEFAULT_MAX_SUGGESTIONS;
     }
 
-    private static class WeightedTag {
+    static class WeightedTag {
         final String tag;
         final double weight;
 
@@ -30,7 +30,7 @@ public class Thing {
         }
     }
 
-    List<String> suggestions(Set<String> curr) {
+    List<WeightedTag> suggestions(Set<String> curr) {
         SortedSet<WeightedTag> byWeight = new TreeSet<>(Comparator.comparingDouble((WeightedTag t) -> t.weight).reversed());
         if (curr.isEmpty()) {
             // grab them all!
@@ -67,10 +67,10 @@ public class Thing {
                 byWeight.add(new WeightedTag(t, tagMap.get(t)));
             }
         }
-        List<String> suggs = new ArrayList<>();
+        List<WeightedTag> suggs = new ArrayList<>();
         for (WeightedTag wt : byWeight) {
             if (suggs.size() >= maxSuggestions) break;
-            suggs.add(wt.tag);
+            suggs.add(wt);
         }
         return suggs;
     }

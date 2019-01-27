@@ -1,5 +1,6 @@
 package com.barneyb.eventlog.taggraph;
 
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
@@ -33,27 +34,28 @@ public class Main {
         Graph tree = new SingleGraph("tree");
         Node start = tree.addNode("start");
         start.addAttribute("ui.label", "Start");
-
         doLevel(tree, new Thing(graph), start, new TreeSet<>());
+
         if (args.length >= 2) {
             FileSink sink = new FileSinkDGS();
             tree.addSink(sink);
             sink.writeAll(tree, new FileOutputStream(args[1]));
         }
 
-//        tree.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
-//                "edge { text-size: 24; shape: freeplane; }");
-//        tree.display();
+        tree.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
+                "edge { text-size: 24; shape: freeplane; }");
+        tree.display();
     }
 
     private static void doLevel(Graph tree, Thing thing, Node curr, Set<String> selected) {
-        for (String t : thing.suggestions(selected)) {
-            Node n = tree.addNode(curr.getId() + "/" + t);
-            n.addAttribute("ui.label", t);
-            tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
-            if (selected.size() < 2) {
+        for (Thing.WeightedTag wt : thing.suggestions(selected)) {
+            Node n = tree.addNode(curr.getId() + "/" + wt.tag);
+            n.addAttribute("ui.label", wt.tag);
+            Edge e = tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
+            e.addAttribute("ui.label", Math.round(wt.weight * 100) / 100.0);
+            if (selected.size() < 4) {
                 Set<String> nsel = new TreeSet<>(selected);
-                nsel.add(t);
+                nsel.add(wt.tag);
                 doLevel(tree, thing, n, nsel);
             }
         }
