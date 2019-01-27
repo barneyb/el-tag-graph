@@ -1,12 +1,14 @@
 package com.barneyb.eventlog.taggraph;
 
-import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.stream.file.FileSink;
+import org.graphstream.stream.file.FileSinkDGS;
 import org.graphstream.stream.file.FileSourceDGS;
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -20,7 +22,7 @@ public class Main {
         Graph graph = new SingleGraph("Sample");
         FileSourceDGS src = new FileSourceDGS();
         src.addSink(graph);
-        src.readAll(args.length == 0 || STDIO.equals(args[0])
+        src.readAll(args.length < 1 || STDIO.equals(args[0])
                 ? System.in
                 : new FileInputStream(args[0]));
 
@@ -33,19 +35,22 @@ public class Main {
         start.addAttribute("ui.label", "Start");
 
         doLevel(tree, new Thing(graph), start, new TreeSet<>());
+        if (args.length >= 2) {
+            FileSink sink = new FileSinkDGS();
+            tree.addSink(sink);
+            sink.writeAll(tree, new FileOutputStream(args[1]));
+        }
 
-        tree.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
-                "edge { text-size: 24; shape: freeplane; }");
-        tree.display();
+//        tree.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
+//                "edge { text-size: 24; shape: freeplane; }");
+//        tree.display();
     }
 
     private static void doLevel(Graph tree, Thing thing, Node curr, Set<String> selected) {
         for (String t : thing.suggestions(selected)) {
             Node n = tree.addNode(curr.getId() + "/" + t);
             n.addAttribute("ui.label", t);
-            n.addAttribute("ui.class", "level-" + selected.size());
-            Edge e = tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
-            e.addAttribute("ui.class", "level-" + selected.size());
+            tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
             if (selected.size() < 2) {
                 Set<String> nsel = new TreeSet<>(selected);
                 nsel.add(t);
