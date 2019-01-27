@@ -1,4 +1,4 @@
-package com.barneyb.eventlog.taggraph;
+package com.barneyb.eventlog.taggraph.suggest;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -8,29 +8,15 @@ import java.util.*;
 
 import static com.barneyb.eventlog.taggraph.Constants.*;
 
-public class Thing {
-
-    public static final int DEFAULT_MAX_SUGGESTIONS = 5;
+public class SimpleWeight implements Suggester {
 
     private final Graph etGraph;
-    private final int maxSuggestions;
 
-    public Thing(Graph etGraph) {
+    public SimpleWeight(Graph etGraph) {
         this.etGraph = etGraph;
-        maxSuggestions = DEFAULT_MAX_SUGGESTIONS;
     }
 
-    static class WeightedTag {
-        final String tag;
-        final double weight;
-
-        private WeightedTag(String tag, double weight) {
-            this.tag = tag;
-            this.weight = weight;
-        }
-    }
-
-    List<WeightedTag> suggestions(Set<String> curr) {
+    public List<WeightedTag> suggestions(Set<String> curr, int count) {
         SortedSet<WeightedTag> byWeight = new TreeSet<>(Comparator.comparingDouble((WeightedTag t) -> t.weight).reversed());
         if (curr.isEmpty()) {
             // grab them all!
@@ -69,7 +55,7 @@ public class Thing {
         }
         List<WeightedTag> suggs = new ArrayList<>();
         for (WeightedTag wt : byWeight) {
-            if (suggs.size() >= maxSuggestions) break;
+            if (suggs.size() >= count) break;
             suggs.add(wt);
         }
         return suggs;

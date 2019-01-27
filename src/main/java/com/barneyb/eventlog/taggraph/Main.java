@@ -1,15 +1,14 @@
 package com.barneyb.eventlog.taggraph;
 
+import com.barneyb.eventlog.taggraph.suggest.SimpleWeight;
+import com.barneyb.eventlog.taggraph.suggest.Suggester;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.SingleGraph;
-import org.graphstream.stream.file.FileSink;
-import org.graphstream.stream.file.FileSinkDGS;
 import org.graphstream.stream.file.FileSourceDGS;
 
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Set;
 import java.util.TreeSet;
@@ -45,19 +44,28 @@ public class Main {
 //        relations.display();
 
 
+        doPathTree(new SimpleWeight(raw));
+    }
 
+    private static void doPathTree(Suggester suggester) {
         Graph paths = new SingleGraph("tree");
         Node start = paths.addNode("start");
         start.addAttribute("ui.label", "Start");
-        doLevel(paths, new Thing(raw), start, new TreeSet<>());
+        start.addAttribute("ui.class", "start");
+        doLevel(paths, suggester, start, new TreeSet<>());
 
-        if (args.length >= 2) {
-            FileSink sink = new FileSinkDGS();
-            paths.addSink(sink);
-            sink.writeAll(paths, new FileOutputStream(args[1]));
-        }
+//        if (args.length >= 2) {
+//            FileSink sink = new FileSinkDGS();
+//            paths.addSink(sink);
+//            sink.writeAll(paths, new FileOutputStream(args[1]));
+//        }
 
         paths.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
+                "node.start { fill-color: #0f0c; }\n" +
+                "node.level0 { fill-color: #f99; }\n" +
+                "node.level1 { fill-color: #d9b; }\n" +
+                "node.level2 { fill-color: #b9d;}\n" +
+                "node.level3 { fill-color: #99f;}\n" +
                 "edge { text-size: 24; shape: freeplane; }");
         paths.display();
     }
@@ -73,16 +81,17 @@ public class Main {
         System.out.println("  " + sum);
     }
 
-    private static void doLevel(Graph tree, Thing thing, Node curr, Set<String> selected) {
-        for (Thing.WeightedTag wt : thing.suggestions(selected)) {
-            Node n = tree.addNode(curr.getId() + "/" + wt.tag);
+    private static void doLevel(Graph g, Suggester suggester, Node curr, Set<String> selected) {
+        for (SimpleWeight.WeightedTag wt : suggester.suggestions(selected, 5)) {
+            Node n = g.addNode(curr.getId() + "/" + wt.tag);
             n.addAttribute("ui.label", wt.tag);
-            Edge e = tree.addEdge(curr.getId() + ":" + n.getId(), curr, n);
+            n.addAttribute("ui.class", "level" + selected.size());
+            Edge e = g.addEdge(curr.getId() + ":" + n.getId(), curr, n);
             e.addAttribute("ui.label", Math.round(wt.weight * 100) / 100.0);
             if (selected.size() < 3) {
                 Set<String> nsel = new TreeSet<>(selected);
                 nsel.add(wt.tag);
-                doLevel(tree, thing, n, nsel);
+                doLevel(g, suggester, n, nsel);
             }
         }
     }
