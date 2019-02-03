@@ -36,15 +36,16 @@ public class Main {
         TagDistillery d = new TagDistillery(raw);
         Graph relations = d.distilled();
 
-//        dump(raw      .getNode("masturbation"));
-//        dump(relations.getNode("masturbation"));
+        dump(raw      .getNode("masturbation"));
+        dump(relations.getNode("masturbation"));
 
 //        relations.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
 //                "edge { text-size: 24; shape: freeplane; }");
 //        relations.display();
 
 
-        doPathTree(new SimpleWeight(raw));
+//        doPathTree(new SimpleWeight(raw));
+//        doPathTree(new Thing(raw));
     }
 
     private static void doPathTree(Suggester suggester) {

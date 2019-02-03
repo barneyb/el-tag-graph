@@ -15,5 +15,5 @@ public interface Suggester {
         }
     }
 
-    List<WeightedTag> suggestions(Set<String> curr, int count);
+    List<WeightedTag> suggestions(Set<String> tags, int count);
 }
