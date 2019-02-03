@@ -1,6 +1,6 @@
 package com.barneyb.eventlog.taggraph;
 
-import com.barneyb.eventlog.taggraph.suggest.SimpleWeight;
+import com.barneyb.eventlog.taggraph.suggest.PageRanked;
 import com.barneyb.eventlog.taggraph.suggest.Suggester;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -26,9 +26,9 @@ public class Main {
                 ? System.in
                 : new FileInputStream(args[0]));
 
-//        graph.addAttribute("ui.stylesheet", "node.event { size: 10px; fill-color: #c66; text-mode: hidden; }\n" +
+//        raw.addAttribute("ui.stylesheet", "node.event { size: 10px; fill-color: #c66; text-mode: hidden; }\n" +
 //                "node.tag {  size: 15px; fill-color: #00c; text-alignment: at-right; text-size: 30; }\n");
-//        graph.display();
+//        raw.display();
 
 
 
@@ -36,14 +36,17 @@ public class Main {
         TagDistillery d = new TagDistillery(raw);
         Graph relations = d.distilled();
 
-        dump(raw      .getNode("masturbation"));
-        dump(relations.getNode("masturbation"));
+//        dump(raw      .getNode("masturbation"));
+//        dump(relations.getNode("masturbation"));
 
 //        relations.addAttribute("ui.stylesheet", "node { text-size: 30; shape: freeplane; fill-color: #fff8; stroke-mode: plain; size-mode: fit; }\n" +
 //                "edge { text-size: 24; shape: freeplane; }");
 //        relations.display();
 
-
+        PageRanked pageRanked = new PageRanked(raw);
+//        pageRanked.ranked.addAttribute("ui.stylesheet", "node { text-size: 30; } edge { text-size: 24; }");
+//        pageRanked.ranked.display();
+        doPathTree(pageRanked);
 //        doPathTree(new SimpleWeight(raw));
 //        doPathTree(new Thing(raw));
     }
@@ -83,7 +86,7 @@ public class Main {
     }
 
     private static void doLevel(Graph g, Suggester suggester, Node curr, Set<String> selected) {
-        for (SimpleWeight.WeightedTag wt : suggester.suggestions(selected, 5)) {
+        for (Suggester.WeightedTag wt : suggester.suggestions(selected, 5)) {
             Node n = g.addNode(curr.getId() + "/" + wt.tag);
             n.addAttribute("ui.label", wt.tag);
             n.addAttribute("ui.class", "level" + selected.size());
